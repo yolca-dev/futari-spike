@@ -1,0 +1,6 @@
+# 秘密鍵は絶対にコミットしない（APNsキー / App Store Connect APIキー）
+*.p8
+# ビルド生成物
+ios/build/
+ios/*.xcodeproj/
+ios/DerivedData/

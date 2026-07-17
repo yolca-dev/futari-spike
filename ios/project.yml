@@ -1,0 +1,63 @@
+# XcodeGen 用のプロジェクト定義。クラウドMacで:
+#   brew install xcodegen
+#   cd spike/ios && xcodegen
+# で FutariSpike.xcodeproj が生成される。
+# ✅ Team ID / Bundle ID / App Group は登録済みの実値を設定済み（書き換え不要）
+name: FutariSpike
+options:
+  deploymentTarget:
+    iOS: "16.1"
+settings:
+  base:
+    DEVELOPMENT_TEAM: TSV38FPG86
+    SWIFT_VERSION: "5.9"
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  FutariSpike:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ssswataru.futarispike
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon  # App/Assets.xcassets のアイコンを使う
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: ふたりスパイク
+        UILaunchScreen: {}
+        UIBackgroundModes: [remote-notification]  # silent push の受信に必須
+    entitlements:
+      path: App/App.entitlements
+      properties:
+        aps-environment: development  # TestFlight配布時は自動でproductionに置き換わる
+        com.apple.security.application-groups:
+          - group.com.ssswataru.futarispike
+    dependencies:
+      - target: FutariWidget
+        embed: true
+
+  FutariWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widget
+      - Shared
+    settings:
+      base:
+        # 拡張のBundle IDは本体のIDで始まる必要がある
+        PRODUCT_BUNDLE_IDENTIFIER: com.ssswataru.futarispike.widget
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: ふたりの気配
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Widget/Widget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.ssswataru.futarispike
