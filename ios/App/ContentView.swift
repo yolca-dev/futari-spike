@@ -9,6 +9,8 @@ struct ContentView: View {
         TabView {
             PartnerHomeView()
                 .tabItem { Label("ふたり", systemImage: "heart.fill") }
+            SettingsView()
+                .tabItem { Label("設定", systemImage: "gearshape.fill") }
             DebugView()
                 .tabItem { Label("計測", systemImage: "waveform.path.ecg") }
         }

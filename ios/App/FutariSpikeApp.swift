@@ -28,6 +28,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         let token = deviceToken.map { String(format: "%02x", $0) }.joined()
         SharedStore.set(token: token)
+        Backend.registerDevice(token: token) // 本番設定＆ペア済みなら相手に届くよう登録（未設定ならno-op）
         NotificationCenter.default.post(name: .init("tokenUpdated"), object: nil)
         print("APNs device token: \(token)")
     }
