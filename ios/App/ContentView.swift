@@ -73,7 +73,7 @@ struct ContentView: View {
                         .foregroundColor(.secondary)
                 }
             }
-            .navigationTitle("ふたりの気配スパイク")
+            .navigationTitle("Younity")
             .refreshable { reload() }
             .onReceive(NotificationCenter.default.publisher(for: .init("tokenUpdated"))) { _ in reload() }
             .onReceive(NotificationCenter.default.publisher(for: .init("stateUpdated"))) { _ in reload() }
