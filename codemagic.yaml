@@ -61,6 +61,6 @@ workflows:
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
-        # 内部テストグループへ配信（App Store Connectで作成済みの「内部テスト」）
-        beta_groups:
-          - 内部テスト
+        # 内部テスターはアップロード済みビルドへ自動でアクセスできるため beta_groups は不要。
+        # （内部グループはビルドへ手動割り当て不可＝指定するとエラーになる）
+        # 外部テスト配信が必要になったら external の beta_groups をここに追加する。

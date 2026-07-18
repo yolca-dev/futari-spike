@@ -28,11 +28,12 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleDisplayName: ふたりスパイク
+        CFBundleDisplayName: Younity
         UILaunchScreen: {}
         UIBackgroundModes: [remote-notification]  # silent push の受信に必須
         UISupportedInterfaceOrientations:          # App Store検証(90474)対策: 画面向きを明示
           - UIInterfaceOrientationPortrait
+        ITSAppUsesNonExemptEncryption: false       # 標準暗号のみ=輸出コンプライアンス免除。TestFlightのMissing Compliance回避
     entitlements:
       path: App/App.entitlements
       properties:
