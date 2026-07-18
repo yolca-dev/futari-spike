@@ -24,12 +24,15 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ssswataru.futarispike
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon  # App/Assets.xcassets のアイコンを使う
+        TARGETED_DEVICE_FAMILY: "1"  # iPhone専用（iPadマルチタスク要件を回避）
     info:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: ふたりスパイク
         UILaunchScreen: {}
         UIBackgroundModes: [remote-notification]  # silent push の受信に必須
+        UISupportedInterfaceOrientations:          # App Store検証(90474)対策: 画面向きを明示
+          - UIInterfaceOrientationPortrait
     entitlements:
       path: App/App.entitlements
       properties:
