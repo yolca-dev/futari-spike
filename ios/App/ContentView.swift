@@ -32,6 +32,9 @@ struct PartnerHomeView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     header
+                    if !Backend.isPaired {
+                        pairingHint
+                    }
                     heroCard
                     previewSection
                     Text("本番では、相手が状態を選ぶと、あなたのホーム画面ウィジェットに気配が届きます。")
@@ -53,6 +56,18 @@ struct PartnerHomeView: View {
             Text("ふたりの気配").font(.subheadline).foregroundStyle(.secondary)
         }
         .padding(.top, 8)
+    }
+
+    private var pairingHint: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "link")
+            Text("「設定」タブでペアリングすると、相手の本当の気配が届きます。いまはプレビュー中です。")
+                .font(.caption2)
+        }
+        .foregroundStyle(.secondary)
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.white.opacity(0.55), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var heroCard: some View {
