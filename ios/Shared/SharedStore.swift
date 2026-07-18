@@ -55,14 +55,17 @@ enum SharedStore {
     /// ウィジェット側のタイムライン生成時に呼ぶ（最後のログ行に widget 時刻を書き込む）
     static func markWidgetReload(_ date: Date = Date()) {
         var logs = defaults.stringArray(forKey: "logs") ?? []
+        defaults.set(date.timeIntervalSince1970, forKey: "lastWidgetReload")
         guard let last = logs.last else { return }
         var parts = last.split(separator: ",").map(String.init)
-        if parts.count == 3, parts[2] == "0" {
+        // 直近(30秒以内)のpush受信ログにだけ「ウィジェット更新時刻」を記録する。
+        // プレビュー操作や1時間ごとの保険リロードで古いログを汚さないためのガード。
+        if parts.count == 3, parts[2] == "0",
+           let received = Double(parts[1]), date.timeIntervalSince1970 - received < 30 {
             parts[2] = "\(date.timeIntervalSince1970)"
             logs[logs.count - 1] = parts.joined(separator: ",")
             defaults.set(logs, forKey: "logs")
         }
-        defaults.set(date.timeIntervalSince1970, forKey: "lastWidgetReload")
     }
 
     static var logs: [(sent: Date?, received: Date, widget: Date?)] {

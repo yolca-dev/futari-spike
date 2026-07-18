@@ -54,12 +54,20 @@ struct PartnerHomeView: View {
     }
 
     private var heroCard: some View {
-        VStack(spacing: 14) {
-            MochiBlob(color: Theme.partner, sleeping: state.isSleeping)
-                .frame(width: 128, height: 118)
+        VStack(spacing: 16) {
+            // 2匹のシーン（左=自分オレンジ / 右=相手青紫）。アイコンと同じ世界観。
+            ZStack {
+                MochiBlob(color: Theme.you)
+                    .frame(width: 96, height: 88)
+                    .offset(x: -26)
+                MochiBlob(color: Theme.partner, sleeping: state.isSleeping)
+                    .frame(width: 104, height: 96)
+                    .offset(x: 26)
+            }
+            .frame(height: 104)
             HStack(spacing: 8) {
                 Image(systemName: state.symbol)
-                Text(state.label).font(.title2.bold())
+                Text("あいては「\(state.label)」").font(.title3.bold())
             }
             if let updatedAt {
                 Text("更新 \(updatedAt, style: .time)")
