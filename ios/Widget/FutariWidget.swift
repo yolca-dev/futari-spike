@@ -131,6 +131,32 @@ struct FutariWidgetView: View {
             .padding()
             .widgetBackgroundCompat(Theme.background)
 
+        case .systemLarge:
+            // ホーム画面（大）: 2匹を大きく見せるシーン
+            VStack(spacing: 18) {
+                Text("あいてのいま").font(.headline).foregroundColor(.secondary)
+                ZStack {
+                    MochiBlob(color: Theme.you)
+                        .frame(width: 122, height: 112)
+                        .offset(x: -34)
+                    MochiBlob(color: Theme.partner, sleeping: ps.isSleeping)
+                        .frame(width: 134, height: 124)
+                        .offset(x: 34)
+                }
+                .frame(height: 132)
+                HStack(spacing: 8) {
+                    Image(systemName: ps.symbol).font(.title2)
+                    Text(ps.label).font(.title.bold())
+                }
+                if let r = entry.receivedAt {
+                    Text("更新 \(r, style: .time)").font(.caption).foregroundColor(.secondary)
+                } else {
+                    Text("気配待ち").font(.caption).foregroundColor(.secondary)
+                }
+            }
+            .padding()
+            .widgetBackgroundCompat(Theme.background)
+
         default:
             // ホーム画面（small）: 相手中心
             VStack(spacing: 6) {
@@ -165,7 +191,7 @@ struct FutariWidget: Widget {
         .configurationDisplayName("ふたりの気配")
         .description("相手のいまの様子")
         .supportedFamilies([
-            .systemSmall, .systemMedium,
+            .systemSmall, .systemMedium, .systemLarge,
             .accessoryInline, .accessoryCircular, .accessoryRectangular,
         ])
     }
