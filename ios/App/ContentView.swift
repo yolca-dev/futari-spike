@@ -120,6 +120,7 @@ struct PartnerHomeView: View {
         state = s
         updatedAt = Date()
         WidgetCenter.shared.reloadAllTimelines()
+        Backend.setState(s.rawValue, emotion: "happy") // 本番設定済みなら相手へも送る（未設定ならno-op）
     }
 
     private func refresh() {
