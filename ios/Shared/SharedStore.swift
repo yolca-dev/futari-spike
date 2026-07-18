@@ -20,6 +20,14 @@ enum SharedStore {
         appendLog(sentAtMs: sentAtMs, receivedAt: receivedAt)
     }
 
+    /// プレビュー用: 計測ログを残さず、表示状態だけを更新する（アプリのピッカーから使う）
+    static func setState(_ state: String, emotion: String = "happy") {
+        let d = defaults
+        d.set(state, forKey: "state")
+        d.set(emotion, forKey: "emotion")
+        d.set(Date().timeIntervalSince1970, forKey: "receivedAt")
+    }
+
     static var state: String { defaults.string(forKey: "state") ?? "awake" }
     static var emotion: String { defaults.string(forKey: "emotion") ?? "happy" }
     static var receivedAt: Date? {

@@ -42,35 +42,7 @@ struct Provider: TimelineProvider {
     }
 }
 
-// 状態→表示の対応（本実装ではアプリと共通の定義に寄せる）
-func stateLabel(_ s: String) -> String {
-    switch s {
-    case "work": return "仕事中"
-    case "meal": return "食事中"
-    case "study": return "勉強中"
-    case "bath": return "お風呂"
-    case "out": return "おでかけ"
-    case "workout": return "うんどう"
-    case "sleep": return "おやすみ"
-    default: return "ふつう"
-    }
-}
-
-func stateSymbol(_ s: String) -> String {
-    switch s {
-    case "work": return "laptopcomputer"
-    case "meal": return "fork.knife"
-    case "study": return "book"
-    case "bath": return "bathtub"
-    case "out": return "figure.walk"
-    case "workout": return "dumbbell"
-    case "sleep": return "moon.zzz"
-    default: return "face.smiling"
-    }
-}
-
-/// もちの単色シルエット（ロック画面のtinted描画でも読めるグリフ）。
-/// 上下にすこし潰れた卵形＋くり抜きの目 —— 本番アバターと同じ輪郭言語
+/// 餅の単色シルエット（ロック画面のtinted描画でも読めるグリフ）。
 struct MochiGlyph: View {
     var sleeping = false
     var body: some View {
@@ -79,7 +51,6 @@ struct MochiGlyph: View {
             ZStack {
                 Ellipse()
                     .frame(width: w, height: w * 0.93)
-                // 目はくり抜いて表現（単色でも顔に見える）
                 Group {
                     if sleeping {
                         Capsule().frame(width: w * 0.16, height: w * 0.05).offset(x: -w * 0.14, y: -w * 0.02)
@@ -102,62 +73,79 @@ struct FutariWidgetView: View {
     var entry: Entry
     @Environment(\.widgetFamily) var family
 
+    private var ps: PresenceState { PresenceState(raw: entry.state) }
+
     var body: some View {
         switch family {
         case .accessoryInline:
-            // ロック画面: 時計の横の1行
-            Label(stateLabel(entry.state), systemImage: stateSymbol(entry.state))
+            Label(ps.label, systemImage: ps.symbol)
 
         case .accessoryCircular:
-            // ロック画面: 丸型。もちのシルエット＋状態アイコン
             ZStack {
                 AccessoryWidgetBackground()
                 VStack(spacing: 1) {
-                    MochiGlyph(sleeping: entry.state == "sleep").frame(width: 30, height: 28)
-                    Image(systemName: stateSymbol(entry.state)).font(.system(size: 10))
+                    MochiGlyph(sleeping: ps.isSleeping).frame(width: 30, height: 28)
+                    Image(systemName: ps.symbol).font(.system(size: 10))
                 }
             }
             .widgetAccentable()
 
         case .accessoryRectangular:
-            // ロック画面: 横長。シルエット＋名前・状態
             HStack(spacing: 8) {
-                MochiGlyph(sleeping: entry.state == "sleep").frame(width: 30, height: 28)
+                MochiGlyph(sleeping: ps.isSleeping).frame(width: 30, height: 28)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("おもち").font(.headline).widgetAccentable()
-                    Text(stateLabel(entry.state)).font(.caption)
+                    Text("あいての気配").font(.headline).widgetAccentable()
+                    Text(ps.label).font(.caption)
                     if let r = entry.receivedAt {
                         Text(r, style: .time).font(.caption2).foregroundColor(.secondary)
                     }
                 }
             }
 
-        default:
-            // ホーム画面 small/medium: カラー版
-            VStack(spacing: 6) {
+        case .systemMedium:
+            // ホーム画面（横長）: 2匹のシーン＋相手の状態
+            HStack(spacing: 16) {
                 ZStack {
-                    Ellipse()
-                        .fill(Color(red: 0.66, green: 0.74, blue: 0.89)) // そら色（相手）
-                        .frame(width: 74, height: 68)
-                    VStack(spacing: 4) {
-                        HStack(spacing: 14) {
-                            Circle().fill(.black.opacity(0.75)).frame(width: 7)
-                            Circle().fill(.black.opacity(0.75)).frame(width: 7)
-                        }
-                        Capsule().fill(.black.opacity(0.75)).frame(width: 12, height: 3)
+                    MochiBlob(color: Theme.you)
+                        .frame(width: 62, height: 58)
+                        .offset(x: -15)
+                    MochiBlob(color: Theme.partner, sleeping: ps.isSleeping)
+                        .frame(width: 70, height: 64)
+                        .offset(x: 15)
+                }
+                .frame(width: 112)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("あいてはいま").font(.caption).foregroundColor(.secondary)
+                    HStack(spacing: 6) {
+                        Image(systemName: ps.symbol)
+                        Text(ps.label).font(.title3.bold())
+                    }
+                    if let r = entry.receivedAt {
+                        Text("更新 \(r, style: .time)").font(.caption2).foregroundColor(.secondary)
+                    } else {
+                        Text("気配待ち").font(.caption2).foregroundColor(.secondary)
                     }
                 }
+                Spacer(minLength: 0)
+            }
+            .padding()
+            .widgetBackgroundCompat(Theme.background)
+
+        default:
+            // ホーム画面（small）: 相手中心
+            VStack(spacing: 6) {
+                MochiBlob(color: Theme.partner, sleeping: ps.isSleeping)
+                    .frame(width: 66, height: 60)
                 HStack(spacing: 5) {
-                    Image(systemName: stateSymbol(entry.state)).font(.caption)
-                    Text(stateLabel(entry.state)).font(.caption).bold()
+                    Image(systemName: ps.symbol).font(.caption)
+                    Text(ps.label).font(.caption).bold()
                 }
                 if let r = entry.receivedAt {
                     Text("更新 \(r, style: .time)").font(.caption2).foregroundColor(.secondary)
                 }
             }
-            .widgetBackgroundCompat(
-                LinearGradient(colors: [Color(red: 0.99, green: 0.95, blue: 0.91), Color(red: 0.96, green: 0.91, blue: 0.95)], startPoint: .top, endPoint: .bottom)
-            )
+            .padding(8)
+            .widgetBackgroundCompat(Theme.background)
         }
     }
 }
