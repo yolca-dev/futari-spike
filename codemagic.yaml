@@ -26,10 +26,16 @@ workflows:
         WIDGET_BUNDLE_ID: "com.ssswataru.futarispike.widget"
       xcode: latest
     scripts:
-      - name: XcodeGenでプロジェクト生成
+      - name: XcodeGenでプロジェクト生成＋ビルド番号設定
         script: |
           brew install xcodegen
           cd ios && xcodegen
+          # CFBundleVersion を Codemagic の連番($BUILD_NUMBER)に上書き。
+          # 「番号は前回より大きく」というApp Store Connectの要件を満たす。
+          # App本体とウィジェットは同じ番号にする必要がある（Appleの検証で一致必須）。
+          setver() { /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $1" "$2" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $1" "$2"; }
+          setver "$BUILD_NUMBER" App/Info.plist
+          setver "$BUILD_NUMBER" Widget/Info.plist
       - name: 署名ファイルを取得（証明書・プロファイルを自動発行）
         script: |
           # 既存の配布証明書はCodemagicに秘密鍵が無く使えないため、
