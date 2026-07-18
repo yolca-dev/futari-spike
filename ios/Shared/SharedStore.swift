@@ -30,6 +30,17 @@ enum SharedStore {
 
     static var state: String { defaults.string(forKey: "state") ?? "awake" }
     static var emotion: String { defaults.string(forKey: "emotion") ?? "happy" }
+
+    /// 相手の表示名（couple-status で取得して保存）
+    static func set(partnerName: String) { defaults.set(partnerName, forKey: "partnerName") }
+    static var partnerName: String? {
+        let n = defaults.string(forKey: "partnerName")
+        return (n?.isEmpty == false) ? n : nil
+    }
+
+    /// 自分の状態（ペア済みのとき、自分が相手へ送っている状態）
+    static func setMyState(_ s: String) { defaults.set(s, forKey: "myState") }
+    static var myState: String { defaults.string(forKey: "myState") ?? "awake" }
     static var receivedAt: Date? {
         let t = defaults.double(forKey: "receivedAt")
         return t > 0 ? Date(timeIntervalSince1970: t) : nil

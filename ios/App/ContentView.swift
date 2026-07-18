@@ -23,8 +23,14 @@ struct ContentView: View {
 struct PartnerHomeView: View {
     @State private var state = PresenceState(raw: SharedStore.state)
     @State private var updatedAt = SharedStore.receivedAt
+    @State private var myState = PresenceState(raw: SharedStore.myState)
+    @State private var partnerName = SharedStore.partnerName
+    @State private var sendMsg = ""
 
     private let cols = [GridItem(.adaptive(minimum: 76), spacing: 12)]
+
+    /// ペア済みなら「自分の状態」、未ペアなら「表示中の状態」をハイライト対象にする
+    private var selected: PresenceState { Backend.isPaired ? myState : state }
 
     var body: some View {
         ZStack {
@@ -37,17 +43,20 @@ struct PartnerHomeView: View {
                     }
                     heroCard
                     previewSection
-                    Text("本番では、相手が状態を選ぶと、あなたのホーム画面ウィジェットに気配が届きます。")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+                    if !Backend.isPaired {
+                        Text("本番では、相手が状態を選ぶと、あなたのホーム画面ウィジェットに気配が届きます。")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
                 }
                 .padding()
             }
         }
+        .onAppear { refresh(); fetchPartner() }
         .onReceive(NotificationCenter.default.publisher(for: .init("stateUpdated"))) { _ in refresh() }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in refresh(); fetchPartner() }
     }
 
     private var header: some View {
@@ -84,7 +93,7 @@ struct PartnerHomeView: View {
             .frame(height: 104)
             HStack(spacing: 8) {
                 Image(systemName: state.symbol)
-                Text("あいては「\(state.label)」").font(.title3.bold())
+                Text("\(partnerName ?? "あいて")は「\(state.label)」").font(.title3.bold())
             }
             if let updatedAt {
                 Text("更新 \(updatedAt, style: .time)")
@@ -103,8 +112,10 @@ struct PartnerHomeView: View {
 
     private var previewSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("ウィジェットを試す").font(.headline)
-            Text("状態を選ぶと、ホーム画面のウィジェットがすぐ切り替わります（プレビュー）。")
+            Text(Backend.isPaired ? "あなたのいまを送る" : "ウィジェットを試す").font(.headline)
+            Text(Backend.isPaired
+                 ? "状態を選ぶと、相手のホーム画面ウィジェットに届きます。"
+                 : "状態を選ぶと、ホーム画面のウィジェットがすぐ切り替わります（プレビュー）。")
                 .font(.caption2).foregroundStyle(.secondary)
             LazyVGrid(columns: cols, spacing: 12) {
                 ForEach(PresenceState.allCases) { s in
@@ -117,32 +128,58 @@ struct PartnerHomeView: View {
                         }
                         .frame(maxWidth: .infinity, minHeight: 64)
                         .background(
-                            s == state ? Theme.you.opacity(0.22) : Color.white.opacity(0.6),
+                            s == selected ? Theme.you.opacity(0.22) : Color.white.opacity(0.6),
                             in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(s == state ? Theme.you : .clear, lineWidth: 2)
+                                .stroke(s == selected ? Theme.you : .clear, lineWidth: 2)
                         )
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(.primary)
                 }
             }
+            if !sendMsg.isEmpty {
+                Text(sendMsg).font(.caption2).foregroundStyle(Theme.you)
+            }
         }
     }
 
     private func pick(_ s: PresenceState) {
-        SharedStore.setState(s.rawValue, emotion: "happy")
-        state = s
-        updatedAt = Date()
-        WidgetCenter.shared.reloadAllTimelines()
-        Backend.setState(s.rawValue, emotion: "happy") // 本番設定済みなら相手へも送る（未設定ならno-op）
+        if Backend.isPaired {
+            // ペア済み: 自分の状態を相手へ送る（自分のウィジェット＝相手表示は変えない）
+            SharedStore.setMyState(s.rawValue)
+            myState = s
+            Backend.setState(s.rawValue, emotion: "happy")
+            sendMsg = "「\(s.label)」を送りました ✓"
+        } else {
+            // 未ペア: プレビューとして表示中の状態を切り替え、ウィジェットを試す
+            SharedStore.setState(s.rawValue, emotion: "happy")
+            state = s
+            updatedAt = Date()
+            WidgetCenter.shared.reloadAllTimelines()
+        }
     }
 
     private func refresh() {
         state = PresenceState(raw: SharedStore.state)
         updatedAt = SharedStore.receivedAt
+        myState = PresenceState(raw: SharedStore.myState)
+        partnerName = SharedStore.partnerName
+    }
+
+    /// ペア済みなら相手の最新の名前・状態を取得して反映
+    private func fetchPartner() {
+        guard Backend.isPaired else { return }
+        Task {
+            if let st = try? await Backend.coupleStatus() {
+                if let name = st.name { SharedStore.set(partnerName: name) }
+                if let s = st.state { SharedStore.setState(s, emotion: st.emotion ?? "happy") }
+                refresh()
+                WidgetCenter.shared.reloadAllTimelines()
+            }
+        }
     }
 }
 

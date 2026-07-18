@@ -108,4 +108,18 @@ enum Backend {
         guard isConfigured, let member = memberId else { return }
         Task { _ = try? await post("/set-state", ["memberId": member, "state": state, "emotion": emotion]) }
     }
+
+    /// 相手の現在の名前・状態を取得（アプリを開いた時などに使う）
+    struct PartnerStatus { let name: String?; let state: String?; let emotion: String? }
+
+    static func coupleStatus() async throws -> PartnerStatus {
+        guard isConfigured, let member = memberId else { throw BackendError.notConfigured }
+        let r = try await post("/couple-status", ["memberId": member])
+        let p = r["partner"] as? [String: Any]
+        return PartnerStatus(
+            name: p?["displayName"] as? String,
+            state: p?["state"] as? String,
+            emotion: p?["emotion"] as? String
+        )
+    }
 }

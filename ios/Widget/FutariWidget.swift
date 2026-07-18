@@ -21,11 +21,12 @@ struct Entry: TimelineEntry {
     let state: String
     let emotion: String
     let receivedAt: Date?
+    let partnerName: String?
 }
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> Entry {
-        Entry(date: Date(), state: "meal", emotion: "happy", receivedAt: nil)
+        Entry(date: Date(), state: "meal", emotion: "happy", receivedAt: nil, partnerName: nil)
     }
     func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
         completion(currentEntry())
@@ -38,7 +39,8 @@ struct Provider: TimelineProvider {
         completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(3600))))
     }
     private func currentEntry() -> Entry {
-        Entry(date: Date(), state: SharedStore.state, emotion: SharedStore.emotion, receivedAt: SharedStore.receivedAt)
+        Entry(date: Date(), state: SharedStore.state, emotion: SharedStore.emotion,
+              receivedAt: SharedStore.receivedAt, partnerName: SharedStore.partnerName)
     }
 }
 
@@ -115,7 +117,7 @@ struct FutariWidgetView: View {
                 }
                 .frame(width: 112)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("あいてはいま").font(.caption).foregroundColor(.secondary)
+                    Text("\(entry.partnerName ?? "あいて")はいま").font(.caption).foregroundColor(.secondary)
                     HStack(spacing: 6) {
                         Image(systemName: ps.symbol)
                         Text(ps.label).font(.title3.bold())
@@ -134,7 +136,7 @@ struct FutariWidgetView: View {
         case .systemLarge:
             // ホーム画面（大）: 2匹を大きく見せるシーン
             VStack(spacing: 18) {
-                Text("あいてのいま").font(.headline).foregroundColor(.secondary)
+                Text("\(entry.partnerName ?? "あいて")のいま").font(.headline).foregroundColor(.secondary)
                 ZStack {
                     MochiBlob(color: Theme.you)
                         .frame(width: 122, height: 112)
